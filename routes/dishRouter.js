@@ -53,7 +53,7 @@ dishRouter.route('/:dishId')
 })
 .post((req, res, next) =>{
     res.statusCode = 403
-    res.end('POST operation not supported on dishes: ', req.params.dishId);
+    res.end('POST operation not supported on dishes: ' + req.params.dishId);
 })
 .put((req, res, next) =>{
     Dishes.findByIdAndUpdate(req.params.dishId, {
@@ -67,7 +67,7 @@ dishRouter.route('/:dishId')
         .catch(err => next(err))
 })
 .delete((req, res, next) =>{
-    Dishes.findAndRmove(req.params.dishId)
+    Dishes.findByIdAndRemove(req.params.dishId)
         .then((dish) => {
             res.statusCode = 200,
             res.setHeader('Content-Type', 'application/json')
@@ -139,7 +139,7 @@ dishRouter.route('/:dishId/comments')
         .catch(err => next(err))
 })
 
-dishRouter.route('/:dishId/comments/commentId')
+dishRouter.route('/:dishId/comments/:commentId')
 .get((req, res, next) =>{
     Dishes.findById(req.params.dishId)   //findbyid available at mongoose as well mongodb
         .then((dish) => {
