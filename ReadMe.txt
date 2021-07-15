@@ -1,6 +1,8 @@
 this is a REST API server
 routers supports the REST API endpoints for the slash dishes
 
+express application work is that the middleware
+
 --morgan: change color output in console
 
 type: express conFusionServer to create folder conFusionServer
