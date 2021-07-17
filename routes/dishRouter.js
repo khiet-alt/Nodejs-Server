@@ -19,7 +19,7 @@ dishRouter.route('/')
         }, (err) => next(err))  //next: if err returned, it is passed off
         .catch(err => next(err))
 })
-.post(authenticate.verifyUser, (req, res, next) =>{ // mean: call authenticate.verify first if have an error will send back to client, if not , execute callback(req, res, next)
+.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>{ // mean:(chaining) call authenticate.verify first if have an error will send back to client, if not , execute callback(req, res, next)
     Dishes.create(req.body)
         .then((dish) => {
             console.log('Dish created: ', dish)
@@ -29,11 +29,11 @@ dishRouter.route('/')
         }, (err) => next(err))  
         .catch(err => next(err))
 })
-.put(authenticate.verifyUser, (req, res, next) =>{
+.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>{
     res.statusCode = 403;
     res.end("Not supported method PUT");
 })
-.delete(authenticate.verifyUser, (req, res, next) =>{
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>{
     Dishes.remove({})
         .then((resp) => {
             res.statusCode = 200,
@@ -54,11 +54,11 @@ dishRouter.route('/:dishId')
         }, (err) => next(err))  
         .catch(err => next(err))
 })
-.post(authenticate.verifyUser, (req, res, next) =>{
+.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>{
     res.statusCode = 403
     res.end('POST operation not supported on dishes: ' + req.params.dishId);
 })
-.put(authenticate.verifyUser, (req, res, next) =>{
+.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>{
     Dishes.findByIdAndUpdate(req.params.dishId, {
         $set: req.body
     }, { new: true })
@@ -69,7 +69,7 @@ dishRouter.route('/:dishId')
         }, (err) => next(err))  
         .catch(err => next(err))
 })
-.delete(authenticate.verifyUser, (req, res, next) =>{
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>{
     Dishes.findByIdAndRemove(req.params.dishId)
         .then((dish) => {
             res.statusCode = 200,
@@ -126,7 +126,7 @@ dishRouter.route('/:dishId/comments')
     res.statusCode = 403;
     res.end("Not supported method PUT on /dishes/" + req.params.dishId + "/comments");
 })
-.delete(authenticate.verifyUser, (req, res, next) =>{
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>{
     Dishes.findById(req.params.dishId)
         .then((dish) => {
             if (dish) {
@@ -149,7 +149,7 @@ dishRouter.route('/:dishId/comments')
 })
 
 dishRouter.route('/:dishId/comments/:commentId')
-.get((req, res, next) =>{
+.get(authenticate.verifyUser, (req, res, next) =>{
     Dishes.findById(req.params.dishId)   //findbyid available at mongoose as well mongodb
         .populate('comments.author')
         .then((dish) => {
@@ -179,27 +179,35 @@ dishRouter.route('/:dishId/comments/:commentId')
     Dishes.findById(req.params.dishId)
         .then((dish) => {
             if (dish && dish.comments.id(req.params.commentId)) {
-                if (req.body.rating)        
-                    dish.comments.id(req.params.commentId).rating = req.body.rating     // becauz no way explicit that mongoose supports for updating an embedded document
-                if (req.body.comment)
-                    dish.comments.id(req.params.commentId).comment = req.body.comment
-                dish.save()     // saved dishComment
-                    .then((dish) => {
-                        Dishes.findById(dish_.id)
-                            .populate('comments.author')
-                            .then(dish => {
-                                res.statusCode = 200,
-                                res.setHeader('Content-Type', 'application/json')
-                                res.json(dish)
-                            })
-                    }, err => next(err))
-            }
+                // console.log("authorid: ", dish.comments.id(req.params.commentId).author)
+                if (req.user._id.equals(dish.comments.id(req.params.commentId).author)){
+                    if (req.body.rating)        
+                        dish.comments.id(req.params.commentId).rating = req.body.rating     // becauz no way explicit that mongoose supports for updating an embedded document
+                    if (req.body.comment)
+                        dish.comments.id(req.params.commentId).comment = req.body.comment
+                    dish.save()     // saved dishComment
+                        .then((dish) => {
+                            Dishes.findById(dish._id)               // fig bug in here(from previous commit)
+                                .populate('comments.author')
+                                .then(dish => {
+                                    res.statusCode = 200,
+                                    res.setHeader('Content-Type', 'application/json')
+                                    res.json(dish)
+                                })
+                        }, err => next(err))
+                }
+                else {
+                    var err = new Error('User account ' + req.user.username + ' is not the author of the comment')
+                    err.status = 403
+                    return next(err)
+                }
+            } 
             else if (dish == null){
                 var err = new Error('Dish ' + req.params.dishId + ' not Found')
                 err.status = 404
                 return next(err)    // pass err to app.js file handling
             }
-            else {
+            else if(dish.comments.id(req.params.commentId)) {
                 var err = new Error('Comment ' + req.params.commentId + ' not Found')
                 err.status = 404
                 return next(err)
@@ -211,17 +219,23 @@ dishRouter.route('/:dishId/comments/:commentId')
     Dishes.findById(req.params.dishId)
         .then((dish) => {
             if (dish && dish.comments.id(req.params.commentId)) {
-                dish.comments.id(req.params.commentId).remove()
-                dish.save()
-                    .then((dish) => {
-                        Dishes.findById(dish_.id)
-                            .populate('comments.author')
-                            .then(dish => {
-                                res.statusCode = 200,
-                                res.setHeader('Content-Type', 'application/json')
-                                res.json(dish)
-                            })
-                    }, err => next(err))
+                if (req.user._id.equals(dish.comments.id(req.params.commentId).author)){
+                    dish.comments.id(req.params.commentId).remove()
+                    dish.save()
+                        .then((dish) => {
+                            Dishes.findById(dish._id)           // fig bug in here(from previous commit)
+                                .populate('comments.author')
+                                .then(dish => {
+                                    res.statusCode = 200,
+                                    res.setHeader('Content-Type', 'application/json')
+                                    res.json(dish)
+                                })
+                        }, err => next(err))
+                } else {
+                    var err = new Error('User account ' + req.user.username + ' is not the author of the comment')
+                    err.status = 403
+                    return next(err)
+                }
             }
             else if (dish == null){
                 var err = new Error('Dish ' + req.params.dishId + ' not Found')

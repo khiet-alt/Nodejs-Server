@@ -8,8 +8,14 @@ var router = express.Router();
 router.use(bodyParse.json())
 
 /* GET users listing. */
-router.get('/', (req, res, next) => {
-  res.send('respond with a resource');
+router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+  User.find({})
+    .then(users =>{
+      res.statusCode = 200
+      res.setHeader('Content-Type', 'application/json')
+      res.json(users)
+    }, err => next(err))
+    .catch(err => next(err))
 });
 
 /*sign up: need in body: {"username", "password", "firstname, lastname: optional"} */
@@ -51,7 +57,7 @@ router.post('/login', passport.authenticate('local'), (req, res) => {   // when 
   res.json({success: true, token: token, status: 'You are successfully logged in'})
 })
 
-router.get('/logout', (req, res) => {     // logout endpoint
+router.get('/logout', (req, res, next) => {     // logout endpoint
   if (req.session){
     req.session.destroy()     // remove session information from the server side 
     res.clearCookie('session-id')   // delete this cookie from the client side
@@ -59,7 +65,7 @@ router.get('/logout', (req, res) => {     // logout endpoint
   }
   else {
     var err = new Error('You are not logged in')
-    err.status = 403
+    err.status = 401
     next(err)
   }
 })
