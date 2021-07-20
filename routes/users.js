@@ -70,5 +70,17 @@ router.get('/logout', (req, res, next) => {     // logout endpoint
     next(err)
   }
 })
-
+/**
+Can you both authorization: bearer ... or access_token: ...
+  or in queries param: ...?access_token=...
+ */
+router.get('/facebook/token', passport.authenticate('facebook-token'), (req, res) => {
+  if (req.user){
+    var token = authenticate.getToken({_id: req.user._id})    // access token from facebook
+    res.statusCode = 200
+    res.setHeader('Content-Type', 'application/json')
+    res.json({success: true, token: token, status: 'You are successfully logged in'})
+  }
+})
+// derived access_token from fb then add it to header to query other method without /login
 module.exports = router;
