@@ -2,6 +2,7 @@ const express = require('express')
 const bodyParse = require('body-parser')
 const authenticate = require('../authenticate')
 const multer = require('multer')
+const cors = require('./cors')
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -29,7 +30,10 @@ const uploadRoute = express.Router()
 uploadRoute.use(bodyParse.json())    // parse body and load it into request
 
 uploadRoute.route('/')
-.get(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>{
+.options(cors.corsWithOptions, (req, res) => {
+    res.sendStatus(200)
+})
+.get(cors.cors, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>{
     res.statusCode = 403;
     res.end("Not supported method GET");
 })
@@ -37,16 +41,16 @@ uploadRoute.route('/')
     in POSTMAN: body: 
         key: imageFile
 */
-.post(authenticate.verifyUser, authenticate.verifyAdmin, upload.single(), (req, res, next) =>{
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, upload.single(), (req, res, next) =>{
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json')
     res.json(req.file)      // req.file obj contain the path to the file in there, supply client knowing the location of image file can accessible in server side
 })
-.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>{
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>{
     res.statusCode = 403;
     res.end("Not supported method PUT");
 })
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>{
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>{
     res.statusCode = 403;
     res.end("Not supported method DELETE");
 })

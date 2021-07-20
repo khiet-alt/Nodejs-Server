@@ -3,12 +3,13 @@ const bodyParse = require('body-parser')
 var User = require('../models/user')
 var passport = require('passport')
 var authenticate = require('../authenticate')
+const cors = require('./cors')
 
 var router = express.Router();
 router.use(bodyParse.json())
 
 /* GET users listing. */
-router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+router.get('/',cors.corsWithOptions,  authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
   User.find({})
     .then(users =>{
       res.statusCode = 200
@@ -19,7 +20,7 @@ router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, ne
 });
 
 /*sign up: need in body: {"username", "password", "firstname, lastname: optional"} */
-router.post('/signup', (req, res, next) => {      // sign up endpoint
+router.post('/signup',cors.corsWithOptions,  (req, res, next) => {      // sign up endpoint
   User.register(new User({username: req.body.username}), req.body.password, (err, user) => {
       if (err){
         res.statusCode = 500
@@ -49,7 +50,7 @@ router.post('/signup', (req, res, next) => {      // sign up endpoint
 })
 
 /*login: need in header: token in bearer(authentication), need in body: username, password */
-router.post('/login', passport.authenticate('local'), (req, res) => {   // when fail, authenticate will automate send res to client
+router.post('/login',cors.corsWithOptions,  passport.authenticate('local'), (req, res) => {   // when fail, authenticate will automate send res to client
   var token = authenticate.getToken({_id: req.user._id})
   
   res.statusCode = 200
