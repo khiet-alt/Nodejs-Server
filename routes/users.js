@@ -49,7 +49,7 @@ router.post('/signup',cors.corsWithOptions,  (req, res, next) => {      // sign 
     })
 })
 
-/*login: need in header: token in bearer(authentication), need in body: username, password */
+/*login: need in header: token in bearer(authentication) will add 'user' in request, need in body: username, password */
 router.post('/login',cors.corsWithOptions,  passport.authenticate('local'), (req, res) => {   // when fail, authenticate will automate send res to client
   var token = authenticate.getToken({_id: req.user._id})
   
