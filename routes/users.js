@@ -9,7 +9,7 @@ var router = express.Router();
 router.use(bodyParse.json())
 
 /* GET users listing. */
-router.options(cors.corsWithOptions, (req, res) => {
+router.options('*', cors.corsWithOptions, (req, res) => { // this is important('*'), if not cors will block. 
   res.sendStatus(200)
 })
 
