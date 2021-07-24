@@ -9,6 +9,10 @@ var router = express.Router();
 router.use(bodyParse.json())
 
 /* GET users listing. */
+router.options(cors.corsWithOptions, (req, res) => {
+  res.sendStatus(200)
+})
+
 router.get('/',cors.corsWithOptions,  authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
   User.find({})
     .then(users =>{
@@ -50,12 +54,28 @@ router.post('/signup',cors.corsWithOptions,  (req, res, next) => {      // sign 
 })
 
 /*login: need in header: token in bearer(authentication) will add 'user' in request, need in body: username, password */
-router.post('/login',cors.corsWithOptions,  passport.authenticate('local'), (req, res) => {   // when fail, authenticate will automate send res to client
-  var token = authenticate.getToken({_id: req.user._id})
-  
-  res.statusCode = 200
-  res.setHeader('Content-Type', 'application/json')
-  res.json({success: true, token: token, status: 'You are successfully logged in'})
+router.post('/login',cors.corsWithOptions, (req, res, next) => {   // when fail, authenticate will automate send res to client
+  passport.authenticate('local', (err, user, info) => {
+    if (err)
+      return next(err)
+    if (!user) { // if was not an error, perhap the user couldn't be found or passwod incorrect
+      res.statusCode = 401
+      res.setHeader('Content-Type', 'application/json')
+      res.json({success: false, status: 'Logged in unsuccessful', err: info})
+    }
+    req.logIn(user, (err) => {
+      if (err) {
+        res.statusCode = 401
+        res.setHeader('Content-Type', 'application/json')
+        res.json({success: false, status: 'Logged in unsuccessful', err: 'Could not login'})
+      }
+
+      var token = authenticate.getToken({_id: req.user._id})
+      res.statusCode = 200
+      res.setHeader('Content-Type', 'application/json')
+      res.json({success: true, status: 'Logged in unsuccessful', token: token})
+    })
+  }) (req, res, next) // this is a structure for pass params (req, res, next) into callback(err, user, info)
 })
 
 router.get('/logout', (req, res, next) => {     // logout endpoint
@@ -83,4 +103,21 @@ router.get('/facebook/token', passport.authenticate('facebook-token'), (req, res
   }
 })
 // derived access_token from fb then add it to header to query other method without /login
+
+router.get('/checkJWTToken', cors.corsWithOptions, (req, res) => {
+  passport.authenticate('jwt', {session: false}, (err, user, info) => {
+    if (err)  return next(err)
+    if (!user) {
+      res.statusCode = 401
+      res.setHeader('Content-Type', 'Application/json')
+      return res.json({status: 'JWT invalid', success: false, err: info})
+    }
+    else {
+      res.statusCode = 200
+      res.setHeader('Content-Type', 'Application/json')
+      return res.json({status: 'valid', success: true, user: user})
+    }
+  }) (req, res)
+})
+
 module.exports = router;

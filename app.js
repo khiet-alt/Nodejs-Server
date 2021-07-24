@@ -16,11 +16,13 @@ var promoRouter = require('./routes/promoRouter')
 var leaderRouter = require('./routes/leaderRouter')
 var uploadRouter = require('./routes/uploadRouter')
 var favoriteRouter = require('./routes/favoriteRouter')
+var commentRouter = require('./routes/commentRouter')
 
 const mongoose = require('mongoose');
 
 const url = config.mongoUrl
-const connect = mongoose.connect(url, {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.Promise = global.Promise   // add this to remove warning deprecated
+const connect = mongoose.connect(url, {useMongoClient:true});
 
 connect.then((db) => {
     console.log("Connected correctly to server");
@@ -45,6 +47,7 @@ app.use('/users', usersRouter);
 app.use(express.static(path.join(__dirname, 'public')));  // enable us to serve static data in public folder
 
 app.use('/dishes', dishRouter)
+app.use('/comments', commentRouter)
 app.use('/promotions', promoRouter)
 app.use('/leaders', leaderRouter)
 app.use('/uploadImage', uploadRouter)
