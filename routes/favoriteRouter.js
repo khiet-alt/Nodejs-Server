@@ -13,9 +13,9 @@ favoriteRouter.route('/')
     res.sendStatus(200)
 })
 .get(cors.cors, authenticate.verifyUser, (req, res, next) => {
-    Favorite.find({user: req.user._id})
+    Favorite.findOne({user: req.user._id})
         .populate('user')
-        .populate('dishes._id')
+        .populate('dishes')
         .then(favor => {
             res.statusCode = 200
             res.setHeader('Content-Type', 'application/json')
@@ -28,7 +28,7 @@ favoriteRouter.route('/')
         .then(favor => {
             if (favor){
                 for (let i = 0; i < req.body.length; i++)
-                    if (favor.dishes.id(req.body[i])) 
+                    if (favor.dishes.indexOf(req.body[i]) !== -1) 
                         break;
                     else 
                         favor.dishes = favor.dishes.concat(req.body[i])
@@ -37,7 +37,7 @@ favoriteRouter.route('/')
                     .then(favor => {
                         Favorite.findOne({user: req.user._id})
                             .populate('user')
-                            .populate('dishes._id')
+                            .populate('dishes')
                             .then(favor => {
                                 res.statusCode = 200
                                 res.setHeader('Content-Type', 'application/json')
@@ -57,7 +57,7 @@ favoriteRouter.route('/')
                         .then(favor => {
                             Favorite.findOne({user: req.user._id})
                                 .populate('user')
-                                .populate('dishes._id')
+                                .populate('dishes')
                                 .then(favor => {
                                     res.statusCode = 200
                                     res.setHeader('Content-Type', 'application/json')
@@ -111,13 +111,13 @@ favoriteRouter.route('/:dishId')
     Favorite.findOne({user: req.user._id})
         .then(favor => {
             if (favor){
-                if (favor.dishes.id(req.params.dishId) == null)
+                if (favor.dishes.indexOf(req.params.dishId) == -1)
                     favor.dishes = favor.dishes.concat({_id: req.params.dishId})
                 favor.save()
                     .then(favor => {
                         Favorite.findOne({user: req.user._id})
                             .populate('user')
-                            .populate('dishes._id')
+                            .populate('dishes')
                             .then(favor => {
                                 res.statusCode = 200
                                 res.setHeader('Content-Type', 'application/json')
@@ -138,7 +138,7 @@ favoriteRouter.route('/:dishId')
                         .then(favor => {
                             Favorite.findOne({user: req.user._id})
                                 .populate('user')
-                                .populate('dishes._id')
+                                .populate('dishes')
                                 .then(favor => {
                                     res.statusCode = 200
                                     res.setHeader('Content-Type', 'application/json')
@@ -154,12 +154,12 @@ favoriteRouter.route('/:dishId')
 .delete(cors.cors, authenticate.verifyUser, (req, res, next) => {
     Favorite.findOne({user: req.user._id})
         .then(favor => {
-            if (favor && favor.dishes.id(req.params.dishId)){
-                favor.dishes.id(req.params.dishId).remove()
+            if (favor && favor.dishes.indexOf(req.params.dishId) !== -1){
+                favor.dishes.splice(favor.dishes.indexOf(req.params.dishId), 1)
 
                 favor.save((err, doc) => {
                     doc.populate('user')
-                        .populate('dishes._id')
+                        .populate('dishes')
                         .execPopulate()
                         .then(resolve => {
                             res.statusCode = 200
