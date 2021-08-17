@@ -15,7 +15,6 @@ favoriteRouter.route('/')
 .get(cors.cors, authenticate.verifyUser, (req, res, next) => {
     Favorite.findOne({user: req.user._id})
         .populate('user')
-        .populate('dishes')
         .then(favor => {
             res.statusCode = 200
             res.setHeader('Content-Type', 'application/json')
@@ -28,16 +27,15 @@ favoriteRouter.route('/')
         .then(favor => {
             if (favor){
                 for (let i = 0; i < req.body.length; i++)
-                    if (favor.dishes.indexOf(req.body[i]) !== -1) 
-                        break;
+                    if (favor.movies.indexOf(req.body[i]) !== -1) 
+                        continue;
                     else 
-                        favor.dishes = favor.dishes.concat(req.body[i])
+                        favor.movies = favor.movies.concat(req.body[i])
 
                 favor.save()
                     .then(favor => {
                         Favorite.findOne({user: req.user._id})
                             .populate('user')
-                            .populate('dishes')
                             .then(favor => {
                                 res.statusCode = 200
                                 res.setHeader('Content-Type', 'application/json')
@@ -46,7 +44,7 @@ favoriteRouter.route('/')
                     }, err => next(err))
             }
             else {
-                Favorite.create({user: req.user._id, "dishes": req.body}, (err, doc) => {
+                Favorite.create({user: req.user._id, "movies": req.body}, (err, doc) => {
                     if (err){
                         res.statusCode = 500
                         res.setHeader('Content-Type', 'application/json')
@@ -57,7 +55,6 @@ favoriteRouter.route('/')
                         .then(favor => {
                             Favorite.findOne({user: req.user._id})
                                 .populate('user')
-                                .populate('dishes')
                                 .then(favor => {
                                     res.statusCode = 200
                                     res.setHeader('Content-Type', 'application/json')
@@ -80,7 +77,7 @@ favoriteRouter.route('/')
         .catch(err => next(err))
 })
 
-favoriteRouter.route('/:dishId')
+favoriteRouter.route('/:movieId')
 .options(cors.corsWithOptions, (req, res) => {
     res.sendStatus(200)
 })
@@ -93,7 +90,7 @@ favoriteRouter.route('/:dishId')
                 res.json({"exists": false, "favorites": favor})
             }
             else{
-                if (favor.dishes.indexOf(req.params.dishId) < 0){
+                if (favor.movies.indexOf(req.params.movieId) < 0){
                     res.statusCode = 200
                     res.setHeader('Content-Type', 'application/json')
                     res.json({"exists": false, "favorites": favor})
@@ -111,13 +108,12 @@ favoriteRouter.route('/:dishId')
     Favorite.findOne({user: req.user._id})
         .then(favor => {
             if (favor){
-                if (favor.dishes.indexOf(req.params.dishId) == -1)
-                    favor.dishes = favor.dishes.concat({_id: req.params.dishId})
+                if (favor.movies.indexOf(req.params.movieId) == -1)
+                    favor.movies = favor.movies.concat({_id: req.params.movieId})
                 favor.save()
                     .then(favor => {
                         Favorite.findOne({user: req.user._id})
                             .populate('user')
-                            .populate('dishes')
                             .then(favor => {
                                 res.statusCode = 200
                                 res.setHeader('Content-Type', 'application/json')
@@ -133,12 +129,11 @@ favoriteRouter.route('/:dishId')
                         res.json({err: err})
                       }
                     else {
-                        doc.dishes = doc.dishes.concat({_id: req.params.dishId})
+                        doc.movies = doc.movies.concat({_id: req.params.movieId})
                         doc.save()
                         .then(favor => {
                             Favorite.findOne({user: req.user._id})
                                 .populate('user')
-                                .populate('dishes')
                                 .then(favor => {
                                     res.statusCode = 200
                                     res.setHeader('Content-Type', 'application/json')
@@ -154,12 +149,11 @@ favoriteRouter.route('/:dishId')
 .delete(cors.cors, authenticate.verifyUser, (req, res, next) => {
     Favorite.findOne({user: req.user._id})
         .then(favor => {
-            if (favor && favor.dishes.indexOf(req.params.dishId) !== -1){
-                favor.dishes.splice(favor.dishes.indexOf(req.params.dishId), 1)
+            if (favor && favor.movies.indexOf(req.params.movieId) !== -1){
+                favor.movies.splice(favor.movies.indexOf(req.params.movieId), 1)
 
                 favor.save((err, doc) => {
                     doc.populate('user')
-                        .populate('dishes')
                         .execPopulate()
                         .then(resolve => {
                             res.statusCode = 200

@@ -19,6 +19,7 @@ var favoriteRouter = require('./routes/favoriteRouter')
 var commentRouter = require('./routes/commentRouter')
 
 const mongoose = require('mongoose');
+const movieRouter = require('./routes/movieRouter');
 
 const url = config.mongoUrl
 mongoose.Promise = global.Promise   // add this to remove warning deprecated
@@ -52,6 +53,7 @@ app.use('/promotions', promoRouter)
 app.use('/leaders', leaderRouter)
 app.use('/uploadImage', uploadRouter)
 app.use('/favorites', favoriteRouter)
+app.use('/movies', movieRouter)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

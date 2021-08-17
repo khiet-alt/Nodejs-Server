@@ -3,12 +3,6 @@ const Schema = mongoose.Schema
 
 var commentSchema = new Schema(
     {
-        rating: {
-            type: Number,
-            min: 1,
-            max: 5,
-            required: true
-        },
         comment:  {
             type: String,
             required: true
@@ -17,9 +11,9 @@ var commentSchema = new Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'
         },
-        dish: {
+        movie: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Dish'
+            ref: 'Movie'
         }
     }, {
         timestamps: true

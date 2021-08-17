@@ -14,3 +14,5 @@ install mongoose bluebird mongoose-currency --save
 
 --setting admin account
 access directly to db and type: db.users.update({"username": "..."}, {$set: {"admin":true}})
+
+--read more about built jsonwebtoken: https://www.freecodecamp.org/news/securing-node-js-restful-apis-with-json-web-tokens-9f811a92bb52/

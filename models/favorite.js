@@ -6,9 +6,9 @@ const favoriteSchema = new Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'
         },
-        dishes: [{
+        movies: [{
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Dish'
+            ref: 'Movie'
         }]
     }
 )
